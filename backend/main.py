@@ -3,7 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import random
 
+# 🟢 database.py에서 DB 초기화 함수 가져오기
+from database import init_db 
+
 app = FastAPI(title="Digital Twin Energy Management System")
+
+# 🟢 서버가 시작될 때 자동으로 DB와 테이블을 생성하는 이벤트 등록
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 # 기존에 작성되어 있던 CORS 설정
 app.add_middleware(
@@ -18,6 +26,11 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
+
+# =================================================================
+# 1주차 백엔드 핵심 산출물: API 엔드포인트
+# =================================================================
 
 # 1. GET /api/buildings (20채 가상 건물 메타데이터 고정 응답)
 @app.get("/api/buildings")
