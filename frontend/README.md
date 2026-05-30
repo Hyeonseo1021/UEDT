@@ -1,11 +1,12 @@
-1. UI 대시보드 흐름 요약
-Control Panel 또는 Timeline Bar 조작
-        ↓
-App.tsx에서 상태 변경
-        ↓
-energySimulation.ts에서 현재 시간 기준으로 데이터 계산
-        ↓
-중앙 도시 모델, KPI, 차트, 경고 피드가 다시 표시됨
+## UI 대시보드 흐름 요약
+   
+1. Control Panel 또는 Timeline Bar 조작
+        
+2. App.tsx에서 상태 변경
+
+3. energySimulation.ts에서 현재 시간 기준으로 데이터 계산
+
+4. 중앙 도시 모델, KPI, 차트, 경고 피드가 다시 표시됨
 
 ## 프론트엔드 작업 메모 (5/30)
 
