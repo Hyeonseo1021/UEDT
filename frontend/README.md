@@ -85,6 +85,7 @@
 
 또는
 
+```tsx```
 <DigitalTwinCanvas
   buildings={buildings}
   selectedId={selectedBuildingId}
