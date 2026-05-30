@@ -196,8 +196,8 @@ input[type="range"] {
   inset: 42px 0 0;
   opacity: 0.52;
   background-image:
-    linear-gradient(rgba(93, 213, 238, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(93, 213, 238, 0.12) 1px, transparent 1px);
+    linear-gradient(rgba(93, 213, 238, 0.2) 2px, transparent 1px),
+    linear-gradient(90deg, rgba(93, 213, 238, 0.2) 2px, transparent 1px);
   background-size: 62px 62px;
   mask-image: linear-gradient(to bottom, transparent, black 12%, black 86%, transparent);
 }
@@ -223,10 +223,7 @@ input[type="range"] {
   margin: 8px 12px 36px;
   border: 1px solid rgba(98, 198, 221, 0.12);
   border-radius: 8px;
-  background:
-    linear-gradient(28deg, transparent 48%, rgba(110, 216, 235, 0.12) 49%, transparent 51%),
-    linear-gradient(152deg, transparent 48%, rgba(110, 216, 235, 0.08) 49%, transparent 51%),
-    rgba(4, 12, 19, 0.44);
+  background:rgba(4, 12, 19, 0.44);
   transform: none;
   transform-origin: 50% 62%;
 }
