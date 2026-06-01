@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import random
 
-# 🟢 database.py에서 DB 초기화 함수 가져오기
+#  database.py에서 DB 초기화 함수 가져오기
 from database import init_db 
 
 app = FastAPI(title="Digital Twin Energy Management System")
 
-# 🟢 서버가 시작될 때 자동으로 DB와 테이블을 생성하는 이벤트 등록
+#  서버가 시작될 때 자동으로 DB와 테이블을 생성하는 이벤트 등록
 @app.on_event("startup")
 def on_startup():
     init_db()
