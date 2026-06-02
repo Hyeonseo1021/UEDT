@@ -1,13 +1,11 @@
-import './App.css'
+// ③ 영역 — App.tsx (임시 골격, ③이 채울 자리)
+import { CitySceneDemo } from './city/CityScene.demo'
 
 function App() {
   return (
-    <>
-      <div>
-        <h1>Vite + React</h1>
-        <p>Initial setup ready.</p>
-      </div>
-    </>
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      <CitySceneDemo />
+    </div>
   )
 }
 
