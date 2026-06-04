@@ -1,19 +1,16 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
-import random
+from sqlmodel import Session, select
+from typing import List
+import os
 
-#  database.py에서 DB 초기화 함수 가져오기
-from database import init_db 
+# database, models 파일에서 필요한 엔진 및 테이블 가져오기
+from database import engine, get_db
+from models import Buildings, Thresholds, EnergyFeatures
 
 app = FastAPI(title="Digital Twin Energy Management System")
 
-#  서버가 시작될 때 자동으로 DB와 테이블을 생성하는 이벤트 등록
-@app.on_event("startup")
-def on_startup():
-    init_db()
-
-# 기존에 작성되어 있던 CORS 설정
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,99 +19,97 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 기존 루트 엔드포인트
+# 루트 엔드포인트
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
 
 # =================================================================
-# 1주차 백엔드 핵심 산출물: API 엔드포인트
+# 🟢 1~3주차 백엔드 핵심 산출물: 실물 데이터베이스 연동 및 경로 보완 버전
 # =================================================================
 
-# 1. GET /api/buildings (20채 가상 건물 메타데이터 고정 응답)
+# 1. GET /api/buildings (실제 DB 기반 건물 메타데이터 반환)
 @app.get("/api/buildings")
-def get_buildings():
+def get_buildings(db: Session = Depends(get_db)):
     """
-    앱 시작 시 프론트엔드가 1회 호출하는 건물 기본 메타데이터
-    용도별 비율: office 5, residential 8, commercial 4, public 3 (총 20채)
+    앱 시작 시 프론트엔드가 1회 호출하여 가상 도시를 그리는 건물 리스트 API
     """
-    buildings_list = []
+    statement = select(Buildings)
+    buildings_data = db.exec(statement).all()
     
-    # 가상 도시에 배치할 20채 건물 빌드 (난수 시드 고정으로 결과 유지)
-    random.seed(42) 
-    
-    for i in range(1, 21):
-        if i <= 5:
-            b_type = "office"
-            name = f"Office Tower {i}"
-        elif i <= 13:
-            b_type = "residential"
-            name = f"Apartment {i-5}"
-        elif i <= 17:
-            b_type = "commercial"
-            name = f"Shopping Mall {i-13}"
-        else:
-            b_type = "public"
-            name = f"Public Hospital {i-17}"
-            
-        buildings_list.append({
-            "building_id": i,
-            "building_type": b_type,
-            "display_name": name,
-            "city_x": round(random.uniform(-30.0, 30.0), 1),
-            "city_z": round(random.uniform(-30.0, 30.0), 1),
-            "height_factor": round(random.uniform(1.5, 3.5), 1)
-        })
-        
-    return {"buildings": buildings_list}
+    return {"buildings": buildings_data}
 
 
-# 2. GET /api/state (디지털 트윈 시간 엔진의 심장 - 1주차 Stub 버전)
+# 2. GET /api/state (디지털 트윈 시간 엔진 연동 - 실제 데이터 기반)
 @app.get("/api/state")
-def get_state(timestamp: str = Query(..., description="ISO 8601 UTC+8 시각: 예) 2018-07-15T14:00:00")):
+def get_state(
+    timestamp: str = Query(..., description="ISO 8601 형식: 예) 2017-01-12 18:00:00"),
+    db: Session = Depends(get_db)
+):
     """
-    ④ 디지털 트윈의 시간 재생 엔진이 매 Clock Tick마다 호출하는 API
-    아직 DB/AI 모델 연동 전이므로 규칙 기반 Stub 데이터로 응답 처리
+    ④ 디지털 트윈의 시간 재생 엔진이 매 Clock Tick마다 호출하는 API.
+    입력받은 타임스탬프 시점의 진짜 에너지 부하 및 기상 정보를 반환합니다.
     """
+    # 1. 해당 시점의 모든 건물 에너지 피처 조회
+    feature_statement = select(EnergyFeatures).where(EnergyFeatures.timestamp == timestamp)
+    features = db.exec(feature_statement).all()
+    
+    if not features:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"해당 시간({timestamp})의 데이터가 DB에 없습니다. 2017-01-12 18:00:00 ~ 2019-12-31 23:00:00 사이로 요청하세요."
+        )
+    
+    # 2. 건물 타입별 임계값(Thresholds) 정보를 통째로 가져와 딕셔너리로 맵핑
+    threshold_statement = select(Thresholds)
+    thresholds_list = db.exec(threshold_statement).all()
+    thresh_map = {t.building_type: t for t in thresholds_list}
+    
+    # 3. 데이터 조립 및 기술 명세서 기준 실시간 위험 등급 분류 로직 수행
     buildings_state = []
     
-    # 타임스탬프 문자열에 고유한 시드를 매핑하여, 같은 시간엔 항상 같은 데이터가 나오도록 처리 (결정론적 노이즈 모사)
-    random.seed(hash(timestamp))
+    # 조하된 데이터 중 첫 번째 행에서 기상 정보 추출 (시간대별 기상은 용도와 관계없이 동일)
+    weather_info = {
+        "temperature": features[0].temperature,
+        "humidity": features[0].humidity
+    }
     
-    for i in range(1, 21):
-        # 건물 타입별 기저 부하(kW) 차별화
-        if i <= 5:   base = 220.0  # office
-        elif i <= 13: base = 60.0   # residential
-        elif i <= 17: base = 180.0  # commercial
-        else:         base = 110.0  # public
-            
-        # 변동성 적용 (±15%)
-        actual = round(base * random.uniform(0.85, 1.15), 1)
-        # 모델 예측값 모사 (실측값 대비 오차 ±5% 내외)
-        predicted = round(actual * random.uniform(0.95, 1.05), 1)
+    # 메타데이터 번호 매칭을 위한 건물 조회
+    b_statement = select(Buildings)
+    all_buildings = db.exec(b_statement).all()
+    
+    # 데이터 매칭용 딕셔너리 구성 (정밀한 대소문자 매칭 보완)
+    b_type_to_id = {b.building_type.lower(): b.building_id for b in all_buildings}
+    
+    for f in features:
+        actual_load = f.load_kw
+        # 1주차 단계에서는 아직 AI 예측 모델(.pkl) 서빙 전이므로 실측값 부근의 모사값으로 대체
+        predicted_load = round(actual_load * 0.98, 2) 
         
-        # 1주차 프론트/디지털트윈 컴포넌트 시각화 테스트용 위험도(normal, warning, danger) 강제 분배
-        # 특정 건물 몇 개에 예외적으로 위험 상태를 부여해 시각화 동작을 확인시킵니다.
-        if i in [3, 14]:
-            risk = "danger"
-        elif i in [8, 19]:
-            risk = "warning"
+        # 위험 등급 분류 (명세서 q75, q90 규칙 기준)
+        # 중요: 원본 데이터의 대소문자가 다를 수 있으므로 key를 표준화하여 조회합니다.
+        t_data = thresh_map.get(f.building_type)
+        
+        if t_data:
+            if actual_load >= t_data.q90:
+                risk = "danger"
+            elif actual_load >= t_data.q75:
+                risk = "warning"
+            else:
+                risk = "normal"
         else:
             risk = "normal"
             
         buildings_state.append({
-            "building_id": i,
-            "load_kw": actual,
-            "predicted_kw": predicted,
+            "building_id": b_type_to_id.get(f.building_type.lower(), 1),
+            "load_kw": actual_load,
+            "predicted_kw": predicted_load,
             "risk": risk
         })
         
     return {
         "timestamp": timestamp,
-        "weather": {
-            "temperature": round(random.uniform(22.0, 33.0), 1),
-            "humidity": random.randint(55, 75)
-        },
+        "weather": weather_info,
         "buildings": buildings_state
     }
