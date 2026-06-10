@@ -1,0 +1,114 @@
+[
+  {
+    "id": "R-01",
+    "name": "Residential A",
+    "zone": "residential",
+    "position": { "x": 17, "y": 58, "z": 0 },
+    "baseConsumption": 520,
+    "threshold": 980
+  },
+  {
+    "id": "R-02",
+    "name": "Residential B",
+    "zone": "residential",
+    "position": { "x": 30, "y": 35, "z": 0 },
+    "baseConsumption": 610,
+    "threshold": 1020
+  },
+  {
+    "id": "C-01",
+    "name": "Commercial A",
+    "zone": "commercial",
+    "position": { "x": 45, "y": 24, "z": 0 },
+    "baseConsumption": 880,
+    "threshold": 1350
+  },
+  {
+    "id": "C-02",
+    "name": "Commercial B",
+    "zone": "commercial",
+    "position": { "x": 61, "y": 39, "z": 0 },
+    "baseConsumption": 940,
+    "threshold": 1420
+  },
+  {
+    "id": "I-01",
+    "name": "Industrial A",
+    "zone": "industrial",
+    "position": { "x": 42, "y": 63, "z": 0 },
+    "baseConsumption": 1280,
+    "threshold": 1640
+  },
+  {
+    "id": "I-02",
+    "name": "Industrial B",
+    "zone": "industrial",
+    "position": { "x": 72, "y": 60, "z": 0 },
+    "baseConsumption": 1160,
+    "threshold": 1550
+  },
+  {
+    "id": "C-03",
+    "name": "Commercial C",
+    "zone": "commercial",
+    "position": { "x": 77, "y": 29, "z": 0 },
+    "baseConsumption": 760,
+    "threshold": 1120
+  },
+  {
+    "id": "R-03",
+    "name": "Residential C",
+    "zone": "residential",
+    "position": { "x": 55, "y": 70, "z": 0 },
+    "baseConsumption": 570,
+    "threshold": 930
+  },
+  {
+    "id": "R-04",
+    "name": "Residential D",
+    "zone": "residential",
+    "position": { "x": 25, "y": 72, "z": 0 },
+    "baseConsumption": 490,
+    "threshold": 760
+  },
+  {
+    "id": "R-05",
+    "name": "Residential E",
+    "zone": "residential",
+    "position": { "x": 83, "y": 48, "z": 0 },
+    "baseConsumption": 540,
+    "threshold": 840
+  },
+  {
+    "id": "C-04",
+    "name": "Commercial D",
+    "zone": "commercial",
+    "position": { "x": 35, "y": 52, "z": 0 },
+    "baseConsumption": 810,
+    "threshold": 1220
+  },
+  {
+    "id": "C-05",
+    "name": "Commercial E",
+    "zone": "commercial",
+    "position": { "x": 68, "y": 22, "z": 0 },
+    "baseConsumption": 900,
+    "threshold": 1340
+  },
+  {
+    "id": "I-03",
+    "name": "Industrial C",
+    "zone": "industrial",
+    "position": { "x": 50, "y": 46, "z": 0 },
+    "baseConsumption": 1040,
+    "threshold": 1490
+  },
+  {
+    "id": "I-04",
+    "name": "Industrial D",
+    "zone": "industrial",
+    "position": { "x": 63, "y": 74, "z": 0 },
+    "baseConsumption": 990,
+    "threshold": 1390
+  }
+]
