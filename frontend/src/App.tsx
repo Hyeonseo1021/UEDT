@@ -1,3 +1,6 @@
+
+// ③ 영역 — App.tsx (임시 골격, ③이 채울 자리)
+import { CitySceneDemo } from './city/CityScene.demo'
 import { useEffect, useMemo, useState } from 'react'
 import './styles/dashboard.css'
 import buildingsData from './data/mockBuildings.json'
@@ -49,6 +52,9 @@ function App() {
   }, [selectedBuildingId])
 
   return (
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      <CitySceneDemo />
+    </div>
     <DashboardLayout
       buildings={simulatedBuildings}
       selectedBuilding={selectedBuilding}
