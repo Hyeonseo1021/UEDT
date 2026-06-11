@@ -7,7 +7,7 @@ export interface Building {
   display_name: string
   city_x: number
   city_z: number
-  height_factor: number
+  height_factor: number,
 }
 
 export type RiskLevel = 'normal' | 'warning' | 'danger'
@@ -16,7 +16,8 @@ export interface BuildingState {
   building_id: number
   load_kw: number
   predicted_kw: number
-  risk: RiskLevel
+  risk: RiskLevel,
+  power_usage?: number
 }
 
 export interface ApiStateResponse {

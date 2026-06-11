@@ -1,76 +1,75 @@
-
-// ③ 영역 — App.tsx (임시 골격, ③이 채울 자리)
-import { CitySceneDemo } from './city/CityScene.demo'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import './styles/dashboard.css'
-import buildingsData from './data/mockBuildings.json'
-import energyData from './data/mockEnergyData.json'
 import { DashboardLayout } from './components/DashboardLayout'
-import type { Building, EnergyTimePoint, ScenarioControls } from './types/energy'
-import {
-  applyLoadBalancing,
-  buildEnergyTimeline,
-  simulateBuildingStatus,
-} from './utils/energySimulation'
-
-const buildings = buildingsData as Building[]
-const baselineEnergy = energyData as EnergyTimePoint[]
+import type { Building as CityBuilding, BuildingState } from './city/types'
 
 function App() {
-  // 화면 전체에서 공유상태입니다
-  // 여기서 API 응답이나 3D 이벤트를 연결하면 됩니다,,
-  const [selectedBuildingId, setSelectedBuildingId] = useState(buildings[0]?.id ?? '')
-  const [currentTimeIndex, setCurrentTimeIndex] = useState(14)
-  const [scenario, setScenario] = useState<ScenarioControls>({
-    temperature: 30,
-    humidity: 65,
-    demandIncrease: 25,
-  })
+  const [buildings, setBuildings] = useState<CityBuilding[]>([])
+  const [buildingStates, setBuildingStates] = useState<BuildingState[]>([])
+  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null)
+  const [currentTimeIndex, setCurrentTimeIndex] = useState(0)
+  const [selectedDate, setSelectedDate] = useState("2017-01-12")
+  
+  const timestamps = useMemo(() => {
+    const times = []
+    for (let i = 0; i < 24; i++) {
+      const hour = i.toString().padStart(2, '0')
+      times.push(`${selectedDate} ${hour}:00:00`) // 선택한 날짜가 반영됨
+    }
+    return times
+  }, [selectedDate])
 
-  const timePoint = baselineEnergy[currentTimeIndex] ?? baselineEnergy[0]
+  const currentTimestamp = timestamps[currentTimeIndex]
 
-  const simulatedBuildings = useMemo(() => {
-    // 현재는 mock JSON과 시나리오 값을 조합해 건물별 소비량/위험도를 계산하게 했음
-    // 추후 FastAPI 연결할 때 buildings, baselineEnergy, scenario를 API 요청/응답으로 교체하면 됩니다.
-    const currentStatus = simulateBuildingStatus(buildings, timePoint, scenario)
-    return applyLoadBalancing(currentStatus, scenario)
-  }, [scenario, timePoint])
+  /* 🔥 핵심: 중심 좌표 계산 */
+  const center = useMemo(() => {
+    if (!buildings.length) return { x: 0, z: 0 }
 
-  const selectedBuilding =
-    simulatedBuildings.find((building) => building.id === selectedBuildingId) ??
-    simulatedBuildings[0]
+    const avgX = buildings.reduce((sum, b) => sum + b.city_x, 0) / buildings.length
+    const avgZ = buildings.reduce((sum, b) => sum + b.city_z, 0) / buildings.length
 
-  const selectedTimeline = useMemo(
-    () => buildEnergyTimeline(selectedBuilding, baselineEnergy, scenario),
-    [scenario, selectedBuilding],
-  )
+    return { x: avgX, z: avgZ }
+  }, [buildings])
 
   useEffect(() => {
-    if (!selectedBuildingId && buildings[0]) {
-      setSelectedBuildingId(buildings[0].id)
-    }
-  }, [selectedBuildingId])
+    fetch('http://localhost:8000/api/buildings')
+      .then(res => res.json())
+      .then(data => {
+        setBuildings(data.buildings)
+
+        if (data.buildings.length > 0) {
+          setSelectedBuildingId(data.buildings[0].building_id)
+        }
+      })
+      .catch(err => console.error('건물 데이터 가져오기 실패:', err))
+  }, [])
+
+  useEffect(() => {
+    if (!currentTimestamp) return
+
+    fetch(`http://localhost:8000/api/state?timestamp=${currentTimestamp}`)
+      .then(res => res.json())
+      .then(data => {
+        setBuildingStates(data.buildings)
+      })
+      .catch(err => console.error('상태 데이터 가져오기 실패:', err))
+  }, [currentTimestamp]) // currentTimeIndex가 바뀌어 currentTimestamp가 변경되면 자동으로 재실행!
 
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <CitySceneDemo />
+    <div className="app-root">
+      <DashboardLayout
+        buildings={buildings}
+        buildingStates={buildingStates}
+        selectedBuildingId={selectedBuildingId}
+        currentTimeIndex={currentTimeIndex}
+        maxTimeIndex={timestamps.length - 1}
+        onBuildingSelect={setSelectedBuildingId}
+        onTimeIndexChange={setCurrentTimeIndex}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        center={center}
+      />
     </div>
-    <DashboardLayout
-      buildings={simulatedBuildings}
-      selectedBuilding={selectedBuilding}
-      selectedBuildingId={selectedBuildingId}
-      currentTimeIndex={currentTimeIndex}
-      scenario={scenario}
-      timeline={selectedTimeline}
-      timePoints={baselineEnergy}
-      onScenarioChange={setScenario}
-      // When a building is clicked in the digital twin, update selectedBuildingId
-      // 디지털트윈 3D 건물을 클릭하면 이 콜백으로 선택 건물 ID를 올려주면 됨
-      onBuildingSelect={setSelectedBuildingId}
-      // currentTimeIndex drives building status, chart, KPI, and alert feed
-      // 재생바의 시간 index가 바뀌면 건물 상태, KPI, 차트, 경고 피드가 모두 다시 계산됩니다 ㅎㅎ,,
-      onTimeIndexChange={setCurrentTimeIndex}
-    />
   )
 }
 

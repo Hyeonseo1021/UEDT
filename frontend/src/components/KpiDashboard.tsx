@@ -1,70 +1,92 @@
-import type { Building } from '../types/energy'
+import type { Building, BuildingState } from '../city/types'
 
 type KpiDashboardProps = {
   buildings: Building[]
-  selectedBuilding: Building
+  buildingStates: BuildingState[]
+  selectedBuildingId: number | null
 }
 
-const zoneLabel = {
-  residential: 'Residential',
-  commercial: 'Commercial',
-  industrial: 'Industrial',
-}
+export function KpiDashboard({
+  buildings,
+  buildingStates,
+  selectedBuildingId,
+}: KpiDashboardProps) {
 
-export function KpiDashboard({ buildings, selectedBuilding }: KpiDashboardProps) {
-  const totalLoad = buildings.reduce((sum, building) => sum + (building.predictedConsumption ?? 0), 0)
-  const averageLoadRate = Math.round(
-    buildings.reduce((sum, building) => sum + (building.loadRate ?? 0), 0) / buildings.length,
+  const stateMap = new Map(
+    buildingStates.map((s) => [s.building_id, s])
   )
-  const riskCount = buildings.filter((building) => building.riskLevel === 'danger').length
-  const cautionCount = buildings.filter((building) => building.riskLevel === 'caution').length
+
+  const totalLoad = buildingStates.reduce((sum, b) => sum + b.load_kw, 0)
+
+  const avgLoad =
+    buildingStates.length > 0
+      ? Math.round(totalLoad / buildingStates.length)
+      : 0
+
+  const dangerCount = buildingStates.filter(b => b.risk === 'danger').length
+  const warningCount = buildingStates.filter(b => b.risk === 'warning').length
+
+  const selectedBuilding = buildings.find(
+    b => b.building_id === selectedBuildingId
+  )
+
+  const selectedState = buildingStates.find(
+    b => b.building_id === selectedBuildingId
+  )
 
   return (
     <section className="panel kpi-panel">
       <div className="panel-title">KPI Dashboard</div>
+
       <div className="kpi-grid">
         <article className="kpi-card">
           <span>Total Load</span>
           <strong>{totalLoad.toLocaleString()}</strong>
-          <small>kWh</small>
+          <small>kW</small>
         </article>
+
         <article className="kpi-card">
           <span>Average Load</span>
-          <strong>{averageLoadRate}%</strong>
-          <small>rate</small>
+          <strong>{avgLoad}</strong>
+          <small>kW</small>
         </article>
+
         <article className="kpi-card danger">
-          <span>Risk Count</span>
-          <strong>{riskCount}</strong>
-          <small>danger</small>
+          <span>Danger</span>
+          <strong>{dangerCount}</strong>
         </article>
+
         <article className="kpi-card caution">
-          <span>Caution Count</span>
-          <strong>{cautionCount}</strong>
-          <small>moderate</small>
+          <span>Warning</span>
+          <strong>{warningCount}</strong>
         </article>
       </div>
 
-      <div className={`selected-summary ${selectedBuilding.riskLevel ?? 'normal'}`}>
-        <div>
-          <span>Selected Building</span>
-          <strong>{selectedBuilding.name}</strong>
+      {selectedBuilding && selectedState && (
+        <div className={`selected-summary ${selectedState.risk}`}>
+          <div>
+            <span>Selected</span>
+            <strong>{selectedBuilding.display_name}</strong>
+          </div>
+
+          <dl>
+            <div>
+              <dt>Type</dt>
+              <dd>{selectedBuilding.building_type}</dd>
+            </div>
+
+            <div>
+              <dt>Load</dt>
+              <dd>{selectedState.load_kw} kW</dd>
+            </div>
+
+            <div>
+              <dt>Status</dt>
+              <dd>{selectedState.risk}</dd>
+            </div>
+          </dl>
         </div>
-        <dl>
-          <div>
-            <dt>Zone</dt>
-            <dd>{zoneLabel[selectedBuilding.zone]}</dd>
-          </div>
-          <div>
-            <dt>Load</dt>
-            <dd>{selectedBuilding.loadRate}%</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>{selectedBuilding.riskLevel}</dd>
-          </div>
-        </dl>
-      </div>
+      )}
     </section>
   )
 }

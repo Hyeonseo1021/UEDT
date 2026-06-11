@@ -1,12 +1,20 @@
-import type { Building } from '../types/energy'
-import { buildAlertFeed } from '../utils/energySimulation'
+import type { Building, BuildingState } from '../city/types'
 
 type AlertFeedProps = {
-  buildings: Building[]
+  buildings: Building[]              // 🔥 추가
+  buildingStates: BuildingState[]
 }
 
-export function AlertFeed({ buildings }: AlertFeedProps) {
-  const alerts = buildAlertFeed(buildings)
+export function AlertFeed({ buildings, buildingStates }: AlertFeedProps) {
+
+  // 🔥 상태 map
+  const buildingMap = new Map(
+    buildings.map((b) => [b.building_id, b])
+  )
+
+  const alerts = buildingStates.filter(
+    (b) => b.risk === 'warning' || b.risk === 'danger'
+  )
 
   return (
     <section className="panel alert-panel">
@@ -16,17 +24,28 @@ export function AlertFeed({ buildings }: AlertFeedProps) {
         <div className="empty-alert">현재 과부하 위험 없음</div>
       ) : (
         <ul className="alert-list">
-          {alerts.map((alert) => (
-            <li className={`alert-item ${alert.riskLevel}`} key={alert.id}>
-              <span className="alert-dot" />
-              <div>
-                <strong>{alert.message}</strong>
-                <small>
-                  {alert.zone} · load {alert.loadRate}%
-                </small>
-              </div>
-            </li>
-          ))}
+          {alerts.map((alert) => {
+            const building = buildingMap.get(alert.building_id)
+
+            return (
+              <li
+                className={`alert-item ${alert.risk}`}
+                key={alert.building_id}
+              >
+                <span className="alert-dot" />
+
+                <div>
+                  <strong>
+                    {building?.display_name ?? `Building ${alert.building_id}`}
+                  </strong>
+
+                  <small>
+                    load {alert.load_kw} kW
+                  </small>
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
     </section>

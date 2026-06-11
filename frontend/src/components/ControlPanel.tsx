@@ -1,81 +1,46 @@
-import type { Dispatch, SetStateAction } from 'react'
-import type { EnergyTimePoint, ScenarioControls} from '../types/energy'
-
 type ControlPanelProps = {
   currentTimeIndex: number
-  scenario: ScenarioControls
-  timePoints: EnergyTimePoint[]
-  onScenarioChange: Dispatch<SetStateAction<ScenarioControls>>
+  maxTimeIndex: number 
+  selectedDate: string
   onTimeIndexChange: (timeIndex: number) => void
+  onDateChange: (date: string) => void
 }
-
 
 export function ControlPanel({
   currentTimeIndex,
-  scenario,
-  timePoints,
-  onScenarioChange,
+  maxTimeIndex, 
   onTimeIndexChange,
+  selectedDate,
+  onDateChange
 }: ControlPanelProps) {
-  const updateScenario = (key: keyof ScenarioControls, value: number) => {
-    onScenarioChange((previous) => ({
-      ...previous,
-      [key]: value,
-    }))
-  }
 
   return (
     <aside className="panel control-panel">
       <div className="panel-title">Control Panel</div>
 
+      <label className="control-field" style={{ marginBottom: '20px' }}>
+        <span>Date</span>
+        <input
+          type="date"
+          value={selectedDate}
+          min="2017-01-01"
+          max="2019-12-31" // DB에 있는 데이터 기간으로 제한
+          onChange={(e) => onDateChange(e.target.value)}
+          style={{ width: '100%', padding: '5px', marginTop: '5px', background: '#1e293b', color: 'white', border: 'none', borderRadius: '4px' }}
+        />
+      </label>
+
       <label className="control-field">
-        <span>Time</span>
-        <strong>{timePoints[currentTimeIndex]?.timeLabel}</strong>
+        <span>Time Index</span>
+        <strong>{currentTimeIndex}</strong>
         <input
           type="range"
           min="0"
-          max={timePoints.length - 1}
+          max={maxTimeIndex} 
           value={currentTimeIndex}
-          onChange={(event) => onTimeIndexChange(Number(event.target.value))}
+          onChange={(e) => onTimeIndexChange(Number(e.target.value))}
         />
       </label>
-
-      <label className="control-field">
-        <span>Temperature</span>
-        <strong>{scenario.temperature}°C</strong>
-        <input
-          type="range"
-          min="16"
-          max="38"
-          value={scenario.temperature}
-          onChange={(event) => updateScenario('temperature', Number(event.target.value))}
-        />
-      </label>
-
-      <label className="control-field">
-        <span>Humidity</span>
-        <strong>{scenario.humidity}%</strong>
-        <input
-          type="range"
-          min="30"
-          max="90"
-          value={scenario.humidity}
-          onChange={(event) => updateScenario('humidity', Number(event.target.value))}
-        />
-      </label>
-
-      <label className="control-field">
-        <span>Demand Increase</span>
-        <strong>{scenario.demandIncrease}%</strong>
-        <input
-          type="range"
-          min="0"
-          max="60"
-          value={scenario.demandIncrease}
-          onChange={(event) => updateScenario('demandIncrease', Number(event.target.value))}
-        />
-      </label>
-
     </aside>
   )
 }
